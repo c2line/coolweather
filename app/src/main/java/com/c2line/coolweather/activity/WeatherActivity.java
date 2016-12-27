@@ -1,5 +1,6 @@
 package com.c2line.coolweather.activity;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -23,6 +24,7 @@ import com.bumptech.glide.Glide;
 import com.c2line.coolweather.R;
 import com.c2line.coolweather.gson.Forecast;
 import com.c2line.coolweather.gson.Weather;
+import com.c2line.coolweather.service.AutoUpdateService;
 import com.c2line.coolweather.util.HttpUtil;
 import com.c2line.coolweather.util.Utility;
 
@@ -179,6 +181,9 @@ public class WeatherActivity extends AppCompatActivity {
      * @param weather
      */
     private void showWeatherInfo(Weather weather) {
+        if(weather!=null&&"ok".equals(weather.status)){
+
+
         String cityName=weather.basic.cityName;
         String updateTime=weather.basic.update.updateTime.split(" ")[1];
         String degree=weather.now.temperature+"℃";
@@ -195,8 +200,8 @@ public class WeatherActivity extends AppCompatActivity {
             TextView minText= (TextView) view.findViewById(R.id.min_text);
             dateText.setText(forecast.date);
             info.setText(forecast.more.info);
-            maxText.setText(forecast.temperature.max);
-            minText.setText(forecast.temperature.min);
+            maxText.setText(forecast.temperature.max+"℃");
+            minText.setText(forecast.temperature.min+"℃");
             forecastLayout.addView(view);
         }
 
@@ -212,6 +217,12 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(carWash);
         sportText.setText(sport);
         weatherLayout.setVisibility(View.VISIBLE);
+
+            Intent intent=new Intent(this, AutoUpdateService.class);
+            startService(intent);
+        }else{
+            Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void init() {
