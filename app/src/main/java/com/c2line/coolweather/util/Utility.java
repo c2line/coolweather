@@ -31,6 +31,7 @@ public class Utility {
                     province.setProvinceCode(provinceObject.getInt("id"));
                     province.save();//像表中写数据
                 }
+                return true;
 
             } catch (JSONException e) {
                 e.printStackTrace();

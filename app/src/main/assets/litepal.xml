@@ -6,6 +6,7 @@
         <mapping class="com.c2line.coolweather.db.Province"/>
         <mapping class="com.c2line.coolweather.db.City"/>
         <mapping class="com.c2line.coolweather.db.Country"/>
+        <mapping class="com.c2line.coolweather.db.Area"></mapping>
     </list>
 
 </litepal>

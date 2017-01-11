@@ -20,10 +20,11 @@
         </activity>
         <activity android:name=".activity.WeatherActivity" />
 
+        <activity android:name=".activity.SearchActivity"></activity>
         <service
             android:name=".service.AutoUpdateService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
     </application>
 
 </manifest>
