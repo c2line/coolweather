@@ -1,11 +1,16 @@
 package com.c2line.coolweather.activity;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -17,23 +22,36 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.bumptech.glide.Glide;
 import com.c2line.coolweather.R;
+import com.c2line.coolweather.db.Area;
 import com.c2line.coolweather.gson.Forecast;
 import com.c2line.coolweather.gson.Weather;
 import com.c2line.coolweather.service.AutoUpdateService;
 import com.c2line.coolweather.util.HttpUtil;
 import com.c2line.coolweather.util.Utility;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
+
+import static org.litepal.crud.DataSupport.where;
 
 public class WeatherActivity extends AppCompatActivity {
 
@@ -49,7 +67,8 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView carWashText;
     private TextView sportText;
 
-    private ImageButton navSearch;
+
+    private ImageButton navTool;
 
     private ImageView bingPicImg;
     public SwipeRefreshLayout swipeRefresh;
@@ -57,6 +76,14 @@ public class WeatherActivity extends AppCompatActivity {
     public DrawerLayout drawerLayout;
     private Button navButton;
     private String mWeatherId;
+
+    private PopupWindow mPopWindow;
+
+
+
+//    public String mLocation;//存放定位的当前位置
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,9 +101,7 @@ public class WeatherActivity extends AppCompatActivity {
         SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString=prefs.getString("weather",null);
 
-
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
-
 
         if(weatherString!=null){
             //有缓存时直接解析天气数据
@@ -98,7 +123,7 @@ public class WeatherActivity extends AppCompatActivity {
             }
         });
 
-
+        //加载背景图片
         String bingPic=prefs.getString("bing_pic",null);
         if(bingPic!=null){
             Glide.with(this).load(bingPic).into(bingPicImg);
@@ -106,6 +131,7 @@ public class WeatherActivity extends AppCompatActivity {
             loadBingPic();
         }
 
+        //打开侧边栏
         navButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -113,13 +139,119 @@ public class WeatherActivity extends AppCompatActivity {
             }
         });
 
-        navSearch.setOnClickListener(new View.OnClickListener() {
+        //右侧工具选项
+        navTool.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showPopWindow();
+            }
+        });
+
+
+
+    }
+
+    private void requestLocation() {
+        //定位
+        LocationClient mLocationClient;
+        mLocationClient=new LocationClient(getApplicationContext());
+        mLocationClient.registerLocationListener(new MyLocationListener());
+
+        //定位设置option
+        LocationClientOption mOption=new LocationClientOption();
+        mOption.setIsNeedAddress(true);
+        mLocationClient.setLocOption(mOption);
+
+        //开始定位
+        mLocationClient.start();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 1:
+                if(grantResults.length>0){
+                    for(int result:grantResults){
+                        if(result!=PackageManager.PERMISSION_GRANTED){
+                            Toast.makeText(WeatherActivity.this,"必须同意所有权限才能使用本功能",Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+                    }
+                    requestLocation();
+                }else{
+                    Toast.makeText(WeatherActivity.this,"发生未知错误",Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    //显示弹出窗
+    private void showPopWindow() {
+        //设置contentView
+        View contentView=LayoutInflater.from(WeatherActivity.this).inflate(R.layout.popup_tool,null);
+        mPopWindow=new PopupWindow(contentView, RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT,true);
+        mPopWindow.setContentView(contentView);
+        mPopWindow.setTouchable(true);
+        //设置各个选项的点击事件
+        LinearLayout lSerach= (LinearLayout) contentView.findViewById(R.id.nav_search);
+        LinearLayout lLocation= (LinearLayout) contentView.findViewById(R.id.nav_location);
+        //点击菜单搜索选项
+        lSerach.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent=new Intent(WeatherActivity.this,SearchActivity.class);
                 startActivityForResult(intent,1);
+                mPopWindow.dismiss();
             }
         });
+
+        //点击菜单定位选项
+        lLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                swipeRefresh.setRefreshing(true);
+                requestWeatherByLocation();
+                mPopWindow.dismiss();
+            }
+        });
+
+        //这句同上面的 mPopWindow.setTouchable(true);同时使用处理popupwindow的隐藏问题
+        mPopWindow.setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_menu));
+
+        //显示PopupWindow
+        mPopWindow.showAsDropDown(navTool);
+    }
+
+
+    //定位当前位置的城市并更新天气信息
+    private void requestWeatherByLocation() {
+        //判断权限
+        List<String> permissionList=new ArrayList<>();
+        if(ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if(ContextCompat.checkSelfPermission(WeatherActivity.this,Manifest.permission.READ_PHONE_STATE)!=PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.READ_PHONE_STATE);
+        }
+        if(ContextCompat.checkSelfPermission(WeatherActivity.this,Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if(!permissionList.isEmpty()){
+            String[] permissions=permissionList.toArray(new String[permissionList.size()]);
+            ActivityCompat.requestPermissions(WeatherActivity.this,permissions,1);
+        }else{
+            requestLocation();
+        }
+
+
+
+
+
     }
 
     @Override
@@ -130,6 +262,7 @@ public class WeatherActivity extends AppCompatActivity {
                 String cityId=data.getStringExtra("cityId");
                 String cityName=data.getStringExtra("cityName");
                 titleCity.setText(cityName);
+                swipeRefresh.setRefreshing(true);
                 requestWeather(cityId);
             }
         }
@@ -204,14 +337,12 @@ public class WeatherActivity extends AppCompatActivity {
 
 
 
-
     /**
      * 处理并展示Weather实体类中的数据
      * @param weather
      */
     private void showWeatherInfo(Weather weather) {
         if(weather!=null&&"ok".equals(weather.status)){
-
 
             String cityName=weather.basic.cityName;
             String updateTime=weather.basic.update.updateTime.split(" ")[1];
@@ -270,7 +401,45 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh= (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
         drawerLayout= (DrawerLayout) findViewById(R.id.drawer_layout);
         navButton= (Button) findViewById(R.id.nav_button);
-        navSearch= (ImageButton) findViewById(R.id.nav_search);
+        navTool= (ImageButton) findViewById(R.id.nav_tool);
 
+    }
+
+    private class MyLocationListener implements BDLocationListener {
+        @Override
+        public void onReceiveLocation(BDLocation bdLocation) {
+            Log.i("TAG","receive");
+//            double[] mLocation=new double[2];
+//            mLocation[0]=bdLocation.getLatitude();//纬度
+//            mLocation[1]=bdLocation.getLongitude();//经度
+            //定位到市
+            String mLocationCountry=bdLocation.getCity().split("市")[0];
+
+            //定位到区
+            String mLocation=bdLocation.getDistrict();//
+            if(mLocation!=null){
+                Log.i("TAG","找到地址");
+                List<Area> areas= where("city=?",mLocation).find(Area.class);
+                Log.i("TAG",areas.size()+"  没有相关信息");
+                if(areas.size()>0){
+                    String mLocationCityId=areas.get(0).getCityId();
+                    requestWeather(mLocationCityId);
+                }
+                if(areas.size()==0){
+                    Log.i("TAG","重新查找信息");
+                    Log.i("TAG",mLocationCountry);
+                    List<Area> areasCountry=DataSupport.where("country=?",mLocationCountry).find(Area.class);
+                    Log.i("TAG",areasCountry.get(0).getCityId()+"");
+                    if(areasCountry.size()>0){
+                        String mLocationCityId=areasCountry.get(0).getCityId();
+                        requestWeather(mLocationCityId);
+                    }
+                }
+
+            }else{
+                Toast.makeText(WeatherActivity.this,"定位失败,请稍后重试",Toast.LENGTH_SHORT).show();
+            }
+            Log.i("TAG",mLocation);
+        }
     }
 }

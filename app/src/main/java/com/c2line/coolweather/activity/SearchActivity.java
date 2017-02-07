@@ -81,12 +81,6 @@ public class SearchActivity extends AppCompatActivity {
         return result;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        dialog.dismiss();
-    }
-
     //显示加载等待
     private  void showDialog(){
         dialog=new ProgressDialog(this);
@@ -96,53 +90,9 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void init() {
-        cityName= (EditText) findViewById(R.id.city_name);
-        search= (ImageButton) findViewById(R.id.search);
-        result= (TextView) findViewById(R.id.search_result);
-
-        //向数据库中导入数据
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                copy();
-//            }
-//        }).start();
-
+        cityName = (EditText) findViewById(R.id.city_name);
+        search = (ImageButton) findViewById(R.id.search);
+        result = (TextView) findViewById(R.id.search_result);
     }
 
-//    private void copy() {
-//        BufferedReader br = null;
-//        try {
-//            InputStreamReader isr = new InputStreamReader(getResources().getAssets().open("cityid.txt"), "UTF-8");
-//            br = new BufferedReader(isr);
-//            while (true) {
-//                String strLine = br.readLine();
-//                if (TextUtils.isEmpty(strLine)) {
-//                    break;
-//                }
-//                String[] cityInfos = strLine.trim().split(",");
-//                Log.i("DataBase",cityInfos[2].toString());
-//                if (cityInfos != null && cityInfos.length > 0) {
-//                    Area area = new Area();
-//                    area.setCityId(cityInfos[0]);
-//                    area.setCityNamePy(cityInfos[1]);
-//                    area.setCity(cityInfos[2]);
-//                    area.setCountry(cityInfos[3]);
-//                    area.setProvince(cityInfos[4]);
-//                    area.save();
-//
-//                }
-//            }
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                br.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//    }
 }

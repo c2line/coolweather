@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#bbf"
+    android:background="#9bbf"
     >
     <RelativeLayout
         android:layout_width="match_parent"
@@ -24,7 +24,6 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#bbf"
         >
         <LinearLayout
             android:layout_width="match_parent"
@@ -64,12 +63,20 @@
 
     </RelativeLayout>
     <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="*仅支持拼音搜索"
+        android:textSize="12sp"
+        android:layout_marginLeft="10dp"
+        android:textColor="#faa"/>
+    <TextView
         android:id="@+id/search_result"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:textSize="16sp"
-        android:layout_marginLeft="10dp"
+        android:textSize="20sp"
+        android:layout_marginLeft="12dp"
         />
 
 
