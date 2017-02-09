@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -17,6 +18,7 @@ import com.c2line.coolweather.db.Area;
 import org.litepal.crud.DataSupport;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class SearchActivity extends AppCompatActivity {
 
@@ -46,17 +48,37 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 showDialog();
-                Area mArea=queryCity();//从数据库中查询城市名字相对应的cityId
-                if(mArea!=null){
-                    dialog.dismiss();
-                    result.setText(mArea.getCity());
-                    cityId=mArea.getCityId();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            final Area mArea=queryCity();//从数据库中查询城市名字相对应的cityId
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if(mArea!=null){
+                                        dialog.dismiss();
+                                        result.setText(mArea.getCity());
+                                        cityId=mArea.getCityId();
 
-                }else{
-                    dialog.dismiss();
-                    result.setText("没有相应的城市");
+                                    }else{
+                                        dialog.dismiss();
+                                        result.setText("没有相应的城市");
+                                        result.setEnabled(false);
 
-                }
+                                    }
+                                }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }).start();
+
+
+
+
             }
         });
 
@@ -74,18 +96,34 @@ public class SearchActivity extends AppCompatActivity {
 
     private Area queryCity() {
         Area result=null;
-        List<Area> areas= DataSupport.where("cityNamePy=?",cityName.getText().toString().trim()).find(Area.class);
-        if(areas.size()>0){
-            result=areas.get(0);
+        String cityN=cityName.getText().toString().trim();
+        Pattern patternPinyin=Pattern.compile("[a-zA-Z]");
+        Pattern patternHanzi=Pattern.compile("^[\\u4e00-\\u9fa5]*$");
+        List<Area> areas;
+        Log.i("TAG",cityN);
+        Log.i("TAG",patternPinyin.matcher(cityN).matches()+"");
+        Log.i("TAG",patternHanzi.matcher(cityN).matches()+"");
+        if(patternPinyin.matcher(cityN).matches()){
+            areas= DataSupport.where("cityNamePy=?",cityN).find(Area.class);
+            if(areas.size()>0){
+                result=areas.get(0);
+            }
+        }
+        if(patternHanzi.matcher(cityN).matches()){
+            areas= DataSupport.where("city=?",cityN).find(Area.class);
+            if(areas.size()>0){
+                result=areas.get(0);
+            }
         }
         return result;
     }
 
     //显示加载等待
     private  void showDialog(){
-        dialog=new ProgressDialog(this);
+        dialog=new ProgressDialog(SearchActivity.this);
         dialog.setMessage("搜索中...");
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(false);
         dialog.show();
     }
 
@@ -93,6 +131,7 @@ public class SearchActivity extends AppCompatActivity {
         cityName = (EditText) findViewById(R.id.city_name);
         search = (ImageButton) findViewById(R.id.search);
         result = (TextView) findViewById(R.id.search_result);
+
     }
 
 }

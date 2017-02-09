@@ -417,19 +417,22 @@ public class WeatherActivity extends AppCompatActivity {
 
             //定位到区
             String mLocation=bdLocation.getDistrict();//
+
+
             if(mLocation!=null){
-                Log.i("TAG","找到地址");
+                if(mLocation.contains("区")){
+                    mLocation=mLocation.split("区")[0];
+                }
+                if(mLocation.contains("县")){
+                    mLocation=mLocation.split("县")[0];
+                }
                 List<Area> areas= where("city=?",mLocation).find(Area.class);
-                Log.i("TAG",areas.size()+"  没有相关信息");
                 if(areas.size()>0){
                     String mLocationCityId=areas.get(0).getCityId();
                     requestWeather(mLocationCityId);
                 }
                 if(areas.size()==0){
-                    Log.i("TAG","重新查找信息");
-                    Log.i("TAG",mLocationCountry);
                     List<Area> areasCountry=DataSupport.where("country=?",mLocationCountry).find(Area.class);
-                    Log.i("TAG",areasCountry.get(0).getCityId()+"");
                     if(areasCountry.size()>0){
                         String mLocationCityId=areasCountry.get(0).getCityId();
                         requestWeather(mLocationCityId);

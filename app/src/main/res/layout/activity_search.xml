@@ -66,7 +66,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:text="*仅支持拼音搜索"
+        android:text="*支持拼音或者汉字搜索"
         android:textSize="12sp"
         android:layout_marginLeft="10dp"
         android:textColor="#faa"/>
