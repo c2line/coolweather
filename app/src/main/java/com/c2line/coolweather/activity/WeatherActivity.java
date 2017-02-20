@@ -14,8 +14,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -38,6 +38,7 @@ import com.c2line.coolweather.db.Area;
 import com.c2line.coolweather.gson.Forecast;
 import com.c2line.coolweather.gson.Weather;
 import com.c2line.coolweather.service.AutoUpdateService;
+import com.c2line.coolweather.util.ActivityCollection;
 import com.c2line.coolweather.util.HttpUtil;
 import com.c2line.coolweather.util.Utility;
 
@@ -53,7 +54,7 @@ import okhttp3.Response;
 
 import static org.litepal.crud.DataSupport.where;
 
-public class WeatherActivity extends AppCompatActivity {
+public class WeatherActivity extends BaseActivity {
 
     private ScrollView weatherLayout;
     private TextView titleCity;
@@ -79,9 +80,10 @@ public class WeatherActivity extends AppCompatActivity {
 
     private PopupWindow mPopWindow;
 
+    private long firstTime = 0;//记录退出程序的第一次点击时间
 
 
-//    public String mLocation;//存放定位的当前位置
+
 
 
 
@@ -148,9 +150,11 @@ public class WeatherActivity extends AppCompatActivity {
         });
 
 
-
     }
 
+    /**
+     * 获取定位地址
+     */
     private void requestLocation() {
         //定位
         LocationClient mLocationClient;
@@ -444,5 +448,22 @@ public class WeatherActivity extends AppCompatActivity {
             }
             Log.i("TAG",mLocation);
         }
+    }
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            long secondTime = System.currentTimeMillis();
+            if (secondTime - firstTime > 2000){
+                Toast.makeText(this,"再点一次退出程序",Toast.LENGTH_SHORT).show();
+                firstTime = secondTime;
+                return true;
+            }else{
+                ActivityCollection.finishAllAcitivites();
+                System.exit(0);
+            }
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

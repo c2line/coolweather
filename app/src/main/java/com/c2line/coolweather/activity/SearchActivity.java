@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -20,7 +19,7 @@ import org.litepal.crud.DataSupport;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends BaseActivity {
 
     private EditText cityName;
     private ImageButton search;
@@ -40,7 +39,6 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
         init();
         clickEvent();
-
     }
 
     private void clickEvent() {

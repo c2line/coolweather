@@ -48,6 +48,7 @@
                 android:padding="3dp"
                 android:singleLine="true"
                 android:hint="Search..."
+
                 android:background="@null"
                 />
             <ImageButton
