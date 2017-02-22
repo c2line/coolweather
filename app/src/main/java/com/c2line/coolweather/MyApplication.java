@@ -3,8 +3,6 @@ package com.c2line.coolweather;
 import android.app.Application;
 import android.content.Context;
 
-import com.baidu.mapapi.SDKInitializer;
-
 import org.litepal.LitePalApplication;
 
 
@@ -19,7 +17,7 @@ public class MyApplication extends Application {
     public void onCreate() {
         context=getApplicationContext();
         LitePalApplication.initialize(context);//初始化LitePal框架
-        SDKInitializer.initialize(context); //初始化百度地图
+
     }
 
     public static Context getContext(){

@@ -41,6 +41,9 @@ public class SearchActivity extends BaseActivity {
         clickEvent();
     }
 
+    /**
+     * 点击查询按钮
+     */
     private void clickEvent() {
         search.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -92,6 +95,10 @@ public class SearchActivity extends BaseActivity {
         });
     }
 
+    /**
+     * 查询城市
+     * @return
+     */
     private Area queryCity() {
         Area result=null;
         String cityN=cityName.getText().toString().trim();

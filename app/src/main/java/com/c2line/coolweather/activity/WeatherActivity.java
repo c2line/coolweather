@@ -32,6 +32,7 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.baidu.mapapi.SDKInitializer;
 import com.bumptech.glide.Glide;
 import com.c2line.coolweather.R;
 import com.c2line.coolweather.db.Area;
@@ -98,6 +99,7 @@ public class WeatherActivity extends BaseActivity {
         }
 
         setContentView(R.layout.activity_weather);
+
         //初始化控件
         init();
         SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(this);
@@ -146,6 +148,7 @@ public class WeatherActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 showPopWindow();
+
             }
         });
 
@@ -171,28 +174,7 @@ public class WeatherActivity extends BaseActivity {
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode){
-            case 1:
-                if(grantResults.length>0){
-                    for(int result:grantResults){
-                        if(result!=PackageManager.PERMISSION_GRANTED){
-                            Toast.makeText(WeatherActivity.this,"必须同意所有权限才能使用本功能",Toast.LENGTH_SHORT).show();
-                            finish();
-                            return;
-                        }
-                    }
-                    requestLocation();
-                }else{
-                    Toast.makeText(WeatherActivity.this,"发生未知错误",Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-                break;
-            default:
-                break;
-        }
-    }
+
 
     //显示弹出窗
     private void showPopWindow() {
@@ -218,8 +200,9 @@ public class WeatherActivity extends BaseActivity {
         lLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                swipeRefresh.setRefreshing(true);
+                SDKInitializer.initialize(getApplicationContext()); //初始化百度地图
                 requestWeatherByLocation();
+                swipeRefresh.setRefreshing(true);
                 mPopWindow.dismiss();
             }
         });
@@ -239,6 +222,8 @@ public class WeatherActivity extends BaseActivity {
         if(ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
             permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
+        Log.i("Permission",ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)+"");
+        Log.i("Permission",PackageManager.PERMISSION_GRANTED+"");
         if(ContextCompat.checkSelfPermission(WeatherActivity.this,Manifest.permission.READ_PHONE_STATE)!=PackageManager.PERMISSION_GRANTED){
             permissionList.add(Manifest.permission.READ_PHONE_STATE);
         }
@@ -252,10 +237,29 @@ public class WeatherActivity extends BaseActivity {
             requestLocation();
         }
 
+    }
 
-
-
-
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 1:
+                if(grantResults.length>0){
+                    for(int result:grantResults){
+                        if(result!=PackageManager.PERMISSION_GRANTED){
+                            Toast.makeText(WeatherActivity.this,"必须同意所有权限才能使用本功能",Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+                    }
+                    requestLocation();
+                }else{
+                    Toast.makeText(WeatherActivity.this,"发生未知错误",Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
